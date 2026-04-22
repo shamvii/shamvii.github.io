@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shamvi — AI Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --border: #1e1e1e;
+      --text: #d6d0c4;
+      --muted: #555;
+      --accent: #c9a84c;
+      --accent2: #7eb8a4;
+      --white: #f0ece4;
+    }
+ 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+    html { scroll-behavior: smooth; }
+ 
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+ 
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+ 
+    /* ── Layout ── */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+ 
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1.4rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(10,10,10,0.95);
+      border-bottom-color: var(--border);
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+ 
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+ 
+    .hero-bg-line {
+      position: absolute;
+      top: 0; right: 15%;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    }
+ 
+    .hero-number {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(8rem, 20vw, 16rem);
+      font-weight: 700;
+      color: transparent;
+      -webkit-text-stroke: 1px #1e1e1e;
+      position: absolute;
+      right: -2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+ 
+    .hero-content {
+      max-width: 620px;
+      position: relative;
+      z-index: 2;
+    }
+ 
+    .hero-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.2s;
+    }
+    .hero-tag::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 1px;
+      background: var(--accent);
+    }
+ 
+    .hero-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 400;
+      color: var(--white);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.3rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.4s;
+    }
+ 
+    .hero-name em {
+      font-style: italic;
+      color: var(--accent);
+    }
+ 
+    .hero-bio {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 1.8rem 0 2.5rem;
+      line-height: 1.8;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.6s;
+    }
+ 
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.7s;
+    }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: var(--white);
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+ 
+    .hero-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.8s;
+    }
+ 
+    .btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 3px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0a0a;
+      font-weight: 500;
+    }
+    .btn-primary:hover { background: #d4b660; transform: translateY(-1px); }
+    .btn-ghost {
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+ 
+    /* ── Sections ── */
+    section {
+      padding: 6rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+ 
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      max-width: 4rem;
+    }
+ 
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 400;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+ 
+    /* ── About ── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+      margin-top: 3rem;
+    }
+    .about-text p {
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .skills-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .skill-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .skill-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+      letter-spacing: 0.05em;
+    }
+    .skill-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent2);
+      letter-spacing: 0.08em;
+    }
+ 
+    /* ── Projects ── */
+    .projects-grid {
+      display: grid;
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+ 
+    .project-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2rem;
+      text-decoration: none;
+      display: block;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.25s;
+    }
+    .project-card:hover {
+      border-color: #2a2a2a;
+      transform: translateX(4px);
+    }
+    .project-card:hover::before { transform: scaleY(1); }
+ 
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.8rem;
+    }
+    .project-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--white);
+      font-weight: 400;
+    }
+    .project-arrow {
+      color: var(--muted);
+      font-size: 1.1rem;
+      transition: transform 0.2s, color 0.2s;
+    }
+    .project-card:hover .project-arrow {
+      transform: translate(3px, -3px);
+      color: var(--accent);
+    }
+    .project-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+      line-height: 1.7;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+    }
+    .tag.active { border-color: var(--accent2); color: var(--accent2); }
+ 
+    /* ── Writing ── */
+    .writing-card {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .writing-card:hover .writing-title { color: var(--accent); }
+    .writing-card:hover .writing-arrow { transform: translateX(4px); color: var(--accent); }
+ 
+    .writing-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--border);
+      min-width: 2.5rem;
+      font-style: italic;
+    }
+    .writing-content { flex: 1; }
+    .writing-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      color: var(--white);
+      font-weight: 400;
+      transition: color 0.2s;
+      margin-bottom: 0.2rem;
+    }
+    .writing-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .writing-arrow {
+      color: var(--muted);
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+ 
+    /* ── Connect ── */
+    .connect-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+    .connect-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.2s;
+    }
+    .connect-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .connect-icon {
+      font-size: 1.4rem;
+      min-width: 2rem;
+      text-align: center;
+    }
+    .connect-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--white);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.15rem;
+    }
+    .connect-handle {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+ 
+    /* ── Footer ── */
+    footer {
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .footer-right {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+ 
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+ 
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+ 
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .about-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .connect-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 1.5rem; }
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+ 
+  <!-- Nav -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">Shamvi</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#writing">Writing</a></li>
+      <li><a href="#connect">Connect</a></li>
+    </ul>
+  </nav>
+ 
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg-line"></div>
+    <div class="hero-number">12</div>
+    <div class="hero-content container">
+      <div class="hero-tag">Available for collaborations</div>
+      <h1 class="hero-name">Building<br><em>AI</em> products<br>that matter.</h1>
+      <p class="hero-bio">
+        12 years across software engineering, technical product management, and solutions architecture. Now focused on building AI products and simplifying AI concepts for everyone.
+      </p>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num">12</div>
+          <div class="stat-label">Years experience</div>
+        </div>
+        <div>
+          <div class="stat-num">3</div>
+          <div class="stat-label">Disciplines</div>
+        </div>
+        <div>
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Still learning</div>
+        </div>
+      </div>
+      <div class="hero-links">
+        <a href="#projects" class="btn btn-primary">View Projects →</a>
+        <a href="#writing" class="btn btn-ghost">Read Writing</a>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- About -->
+  <section id="about">
+    <div class="container">
+      <div class="section-label">01 — About</div>
+      <h2 class="section-title reveal">Engineer. PM.<br>Solutions Architect.<br><em>AI Builder.</em></h2>
+      <div class="about-grid">
+        <div class="about-text reveal">
+          <p>I've spent 12 years at the intersection of technology and product — building systems, leading teams, and bridging the gap between engineering complexity and business outcomes.</p>
+          <p>Today, my focus is on AI products. I believe the best AI tools are the ones that feel simple — not because they are simple, but because someone worked hard to make them that way.</p>
+          <p>I build in public, write to simplify, and ship to learn.</p>
+        </div>
+        <div class="skills-list reveal">
+          <div class="skill-item">
+            <span class="skill-name">Software Engineering</span>
+            <span class="skill-tag">12 yrs</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Technical Product Management</span>
+            <span class="skill-tag">Senior</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Solutions Architecture</span>
+            <span class="skill-tag">Enterprise</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">AI / LLM Products</span>
+            <span class="skill-tag">Building</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">RAG & Vector Search</span>
+            <span class="skill-tag">Active</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Python · Gradio · ChromaDB</span>
+            <span class="skill-tag">Stack</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- Projects -->
+  <section id="projects">
+    <div class="container">
+      <div class="section-label">02 — Projects</div>
+      <h2 class="section-title reveal">Things I've<br>shipped.</h2>
+      <div class="projects-grid">
+ 
+        <a href="https://huggingface.co/spaces/Shamvi24/rag-pdf-chat" target="_blank" class="project-card reveal">
+          <div class="project-header">
+            <div class="project-name">PDF Chat — RAG App</div>
+            <div class="project-arrow">↗</div>
+          </div>
+          <p class="project-desc">Upload any PDF and ask questions about it using AI. Built with a full RAG pipeline — chunking, embeddings, vector search, and Gemini for grounded answers. Deployed on Hugging Face Spaces.</p>
+          <div class="project-tags">
+            <span class="tag active">Live</span>
+            <span class="tag">Python</span>
+            <span class="tag">Gradio</span>
+            <span class="tag">ChromaDB</span>
+            <span class="tag">Gemini API</span>
+            <span class="tag">RAG</span>
+          </div>
+        </a>
+ 
+        <a href="https://necessary-stop-142.notion.site/Home-3184f3987e99802c88ccf7351e2a7443" target="_blank" class="project-card reveal">
+          <div class="project-header">
+            <div class="project-name">Portfolio & Knowledge Base</div>
+            <div class="project-arrow">↗</div>
+          </div>
+          <p class="project-desc">A structured Notion workspace documenting projects, learnings, and AI explorations. Built as a public knowledge base for anyone learning to build with AI.</p>
+          <div class="project-tags">
+            <span class="tag active">Public</span>
+            <span class="tag">Notion</span>
+            <span class="tag">Documentation</span>
+            <span class="tag">AI Learning</span>
+          </div>
+        </a>
+ 
+      </div>
+    </div>
+  </section>
+ 
+  <!-- Writing -->
+  <section id="writing">
+    <div class="container">
+      <div class="section-label">03 — Writing</div>
+      <h2 class="section-title reveal">Simplifying AI,<br>one post at a time.</h2>
+      <div style="margin-top: 3rem;">
+ 
+        <a href="https://substack.com/@stringifytech/posts" target="_blank" class="writing-card reveal">
+          <div class="writing-num">01</div>
+          <div class="writing-content">
+            <div class="writing-title">Stringify Tech on Substack</div>
+            <div class="writing-sub">stringifytech · AI concepts, products & builds</div>
+          </div>
+          <div class="writing-arrow">→</div>
+        </a>
+ 
+        <a href="https://substack.com/@stringifytech/posts" target="_blank" class="writing-card reveal">
+          <div class="writing-num">02</div>
+          <div class="writing-content">
+            <div class="writing-title">How RAG Actually Works</div>
+            <div class="writing-sub">Breaking down retrieval-augmented generation for builders</div>
+          </div>
+          <div class="writing-arrow">→</div>
+        </a>
+ 
+        <a href="https://substack.com/@stringifytech/posts" target="_blank" class="writing-card reveal">
+          <div class="writing-num">03</div>
+          <div class="writing-content">
+            <div class="writing-title">All Articles →</div>
+            <div class="writing-sub">Read everything on Substack</div>
+          </div>
+          <div class="writing-arrow">→</div>
+        </a>
+ 
+      </div>
+    </div>
+  </section>
+ 
+  <!-- Connect -->
+  <section id="connect">
+    <div class="container">
+      <div class="section-label">04 — Connect</div>
+      <h2 class="section-title reveal">Find me<br>everywhere.</h2>
+      <div class="connect-grid" style="margin-top: 3rem;">
+ 
+        <a href="https://github.com/shamvii" target="_blank" class="connect-card reveal">
+          <div class="connect-icon">⌥</div>
+          <div>
+            <div class="connect-name">GitHub</div>
+            <div class="connect-handle">@shamvii</div>
+          </div>
+        </a>
+ 
+        <a href="https://huggingface.co/Shamvi24" target="_blank" class="connect-card reveal">
+          <div class="connect-icon">◈</div>
+          <div>
+            <div class="connect-name">Hugging Face</div>
+            <div class="connect-handle">@Shamvi24</div>
+          </div>
+        </a>
+ 
+        <a href="https://substack.com/@stringifytech/posts" target="_blank" class="connect-card reveal">
+          <div class="connect-icon">✦</div>
+          <div>
+            <div class="connect-name">Substack</div>
+            <div class="connect-handle">@stringifytech</div>
+          </div>
+        </a>
+ 
+        <a href="https://necessary-stop-142.notion.site/Home-3184f3987e99802c88ccf7351e2a7443" target="_blank" class="connect-card reveal">
+          <div class="connect-icon">□</div>
+          <div>
+            <div class="connect-name">Notion</div>
+            <div class="connect-handle">Knowledge Base</div>
+          </div>
+        </a>
+ 
+      </div>
+    </div>
+  </section>
+ 
+  <!-- Footer -->
+  <footer>
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div class="footer-left">© 2026 Shamvi · Built with intention</div>
+      <div class="footer-right">Building in public.</div>
+    </div>
+  </footer>
+ 
+  <script>
+    // Nav scroll effect
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+ 
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+ 
+</body>
+</html>
